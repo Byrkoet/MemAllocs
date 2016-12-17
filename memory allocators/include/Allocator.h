@@ -64,6 +64,7 @@ namespace alloc { namespace math
 		return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(address) + static_cast<uintptr_t>(alignment - 1) & static_cast<uintptr_t>(~(alignment - 1)));
 	}
 	
+	// NOTE: not suited for checking alignment, as it doesn't work as expected with addresses.
 	// How many bytes needed to adjust address for alignment.
 	// @param alignment must be power of 2.
 	inline uint8_t AdjustmentFromAlign(void *address, uint8_t alignment)
@@ -168,6 +169,20 @@ namespace alloc
 		}
 
 		allocator->Deallocate(array_object - header_size);
+	}
+
+	// Rarely used, since most object are naturally aligned.
+	template<class T>
+	bool IsAligned(T const* obj, size_t alignment = alignof(T))
+	{
+		return reinterpret_cast<uintptr_t>(obj) % alignment == 0;
+	}
+
+	// Test if an object is custom aligned.
+	template<class T>
+	bool IsAdjusted(T *obj, size_t alignment)
+	{
+		return !math::AdjustmentFromAlign(obj, alignment);
 	}
 
 	template<class T>

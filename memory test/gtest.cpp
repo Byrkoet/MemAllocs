@@ -1,10 +1,44 @@
-#include "gtest/gtest.h"
+#include "tests.h"
 #include "LinearAllocator.h"
 #include "StackAllocator.h"
 
-namespace
+namespace testing_basic
 {
-	struct LinearAllocatorTest : testing::Test
+	TEST(AlignmentTest, AdjustmentFromAlignTest)
+	{
+		void *mem_test = reinterpret_cast<void*>(0xb);
+		uint8_t alignment = alloc::math::AdjustmentFromAlign(mem_test, 4);
+
+		ASSERT_EQ(alignment, 1llu);
+	}
+
+	TEST(AlignmentTest, AlignTest)
+	{
+		void *mem_test = reinterpret_cast<void*>(0xc);
+		void *mem_aligned = alloc::math::Align(mem_test, 8);
+		uint8_t alignment = alloc::math::AdjustmentFromAlign(mem_aligned, 8);
+
+		ASSERT_EQ(alignment, 0llu);
+	}
+
+	TEST(AlignmentTest, AdjustTest)
+	{
+		void *mem_test = reinterpret_cast<void*>(0xf);
+		void *mem_aligned = alloc::math::Align(mem_test, 8);
+		EXPECT_PRED_FORMAT2(tests::AssertAdjustmentInFormat2, mem_aligned, 16);
+	}
+
+	TEST(AlignmentTest, AdjustTest2)
+	{
+		void *mem_test = reinterpret_cast<void*>(0xf);
+		void *mem_aligned = alloc::math::Align(mem_test, 8);
+		EXPECT_PRED_FORMAT2(tests::AssertAdjustmentInFormat2, mem_aligned, 16);
+	}
+}
+
+namespace testing_linear_alloc
+{
+	struct LinearAllocator_F : testing::Test
 	{
 		LinearAllocator *alloc;
 
@@ -20,24 +54,27 @@ namespace
 		}
 	};
 
-	TEST_F(LinearAllocatorTest, AllocatorStartsEmpty)
+	TEST_F(LinearAllocator_F, AllocatorStartsEmpty)
 	{
 		ASSERT_EQ(0llu, alloc->GetNumAllocations());
 	}
 
-	TEST_F(LinearAllocatorTest, AllocationTest)
+	TEST_F(LinearAllocator_F, AllocationTest)
 	{
 		void *mem = alloc->Allocate(512, 8);
 		ASSERT_TRUE(mem != nullptr);
 	}
 
-	TEST_F(LinearAllocatorTest, UniquePointerTest)
+	TEST_F(LinearAllocator_F, UniquePointerTest)
 	{
 		alloc::unique_ptr<int> integer = alloc::make_unique<int>(alloc, 10);
 		ASSERT_EQ(10, *integer);
 	}
+}
 
-	struct StackAllocatorTest : testing::Test
+namespace testing_stack_alloc
+{
+	struct StackAllocator_F : testing::Test
 	{
 		StackAllocator *alloc;
 
@@ -52,19 +89,19 @@ namespace
 		}
 	};
 
-	TEST_F(StackAllocatorTest, AllocatorStartsEmpty)
+	TEST_F(StackAllocator_F, AllocatorStartsEmpty)
 	{
 		ASSERT_EQ(0llu, alloc->GetNumAllocations());
 	}
 
-	TEST_F(StackAllocatorTest, AllocationTest)
+	TEST_F(StackAllocator_F, AllocationTest)
 	{
 		void *mem = alloc->Allocate(512, 8);
 		ASSERT_TRUE(mem != nullptr);
 		alloc->Deallocate(mem);
 	}
 
-	TEST_F(StackAllocatorTest, UniquePointerTest)
+	TEST_F(StackAllocator_F, UniquePointerTest)
 	{
 		alloc::unique_ptr<int> integer = alloc::make_unique<int>(alloc, 123);
 		ASSERT_EQ(123, *integer);
